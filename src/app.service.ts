@@ -4,41 +4,6 @@ import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { Pool } from 'pg';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-  points: number;
-}
-
-interface Transfer {
-  id: string;
-  fromUserId: string;
-  toUserId: string;
-  points: number;
-  status: 'pending' | 'completed' | 'expired';
-  expiresAt: Date;
-}
-
-export interface Transaction {
-  id: string;
-  userId: string;
-  type: 'credit' | 'debit';
-  points: number;
-  createdAt: Date;
-}
-
-
-const pool = new Pool({
-  user: 'gauravmandal',
-  host: 'localhost',
-  database: 'wallet_db', // <--- This must be explicitly defined
-  password: 'password',
-  port: 5432,
-})
-
-
 @Injectable()
 export class AppService {
   private pool: Pool;

@@ -1,98 +1,82 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Points Transfer API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A minimal NestJS backend that allows users to transfer loyalty points between each other with safe, transactional handling using PostgreSQL.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## How It Works
 
-## Description
+1. **Register User** → New user is created with 500 initial points.
+2. **Login** → User signs in and receives a JWT token.
+3. **Create Transfer** → User creates a transfer request to another user (by email). Transfer is saved as PENDING with a 10-minute expiry.
+4. **Confirm Transfer** → On confirmation:
+   * Sender balance is locked
+   * Points are deducted from sender
+   * Points are added to receiver
+   * Debit & credit transactions are recorded
+   * Transfer is marked COMPLETED
+5. **View Transactions** → User can view their complete transaction history.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Flow Diagram
 
-## Project setup
+```
+Register → Login → Create Transfer → Confirm Transfer
+              ↓
+      DB Transaction (BEGIN)
+              ↓
+      Lock Sender Wallet
+              ↓
+   Deduct Sender / Add Receiver
+              ↓
+   Insert Debit & Credit Records
+              ↓
+        COMMIT
+```
+## Key Features
+
+- **In-Memory Storage**: All data stored in arrays (users, transfers, transactions)
+- **JWT Authentication**: Token-based auth for secure endpoints
+- **Password Hashing**: bcrypt for secure password storage
+- **Transfer Expiry**: Unconfirmed transfers expire after 10 minutes
+- **Concurrent Protection**: Lock mechanism prevents two transfers from the same user happening simultaneously.
+
+## Database Tables
+
+* **users** – user info and point balance
+* **transfers** – pending / completed transfers
+* **transactions** – debit & credit history
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/register` | Register new user |
+| POST | `/auth/login` | Login and get JWT |
+| POST | `/transfers` | Create transfer |
+| POST | `/transfers/:id/confirm` | Confirm transfer |
+| GET | `/transactions` | View transaction history |
+
+## Run Locally
 
 ```bash
-$ npm install
+npm install
+npm run start:dev
 ```
 
-## Compile and run the project
+Server runs at `http://localhost:3000`
 
-```bash
-# development
-$ npm run start
 
-# watch mode
-$ npm run start:dev
+## API Testing Screenshots
 
-# production mode
-$ npm run start:prod
-```
+### User Registration
+![User Registration](ss/register.png)
 
-## Run tests
+### Login
+![Login](ss/signin.png)
 
-```bash
-# unit tests
-$ npm run test
+### Create Transfer
+![Create Transfer](ss/transfer2.png)
 
-# e2e tests
-$ npm run test:e2e
+### Confirm Transfer
+![Confirm Transfer](ss/confirm.png)
 
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Transaction History
+![Transactions](ss/transactions.png)
